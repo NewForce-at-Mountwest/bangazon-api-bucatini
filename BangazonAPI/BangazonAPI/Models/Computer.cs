@@ -7,7 +7,7 @@ namespace BangazonAPI.Models
 {
     public class Computer
     {
-        public int id { get; set; }
+        public int Id { get; set; }
 
         public string Manufacturer { get; set; }
 
