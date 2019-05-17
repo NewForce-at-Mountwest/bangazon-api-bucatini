@@ -10,6 +10,8 @@ namespace BangazonAPI.Models
 
         public int DepartmentId { get; set; }
         public bool IsSupervisor { get; set; }
-    
+
+        public Computer CurrentComputer { get; set; } = new Computer();
+
     }
 }
