@@ -7,6 +7,7 @@ namespace BangazonAPI.Models
 {
     public class Computer
     {
+
         public int Id { get; set; }
 
         public string Manufacturer { get; set; }
@@ -16,5 +17,6 @@ namespace BangazonAPI.Models
         public DateTime DecomissionDate { get; set; }
 
         public DateTime PurchaseDate { get; set; }
+
     }
 }
