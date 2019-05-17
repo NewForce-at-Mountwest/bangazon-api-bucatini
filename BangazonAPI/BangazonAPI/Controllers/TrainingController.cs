@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Data.SqlClient;
 
 namespace BangazonAPI.Controllers
 {
@@ -12,6 +14,22 @@ namespace BangazonAPI.Controllers
     [ApiController]
     public class TrainingController : ControllerBase
     {
+        private readonly IConfiguration _config;
+
+        public TrainingController(IConfiguration config)
+        {
+            _config = config;
+        }
+
+        public SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            }
+        }
+
+        //[Route("api")]
         // GET: api/Training
         [HttpGet]
         public IEnumerable<string> Get()
@@ -20,7 +38,7 @@ namespace BangazonAPI.Controllers
         }
 
         // GET: api/Training/5
-        [HttpGet("{id}", Name = "Get")]
+        [HttpGet("{id}", Name = "GetTraining")]
         public string Get(int id)
         {
             return "value";

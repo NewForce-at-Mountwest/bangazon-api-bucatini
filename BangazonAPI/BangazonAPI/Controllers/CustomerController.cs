@@ -90,8 +90,6 @@ namespace BangazonAPI.Controllers
                                     {paymentTables}";
                     }
 
-
-
                     else
                     {
                         command = $"{customerColumns} {customerTable}";
@@ -137,17 +135,48 @@ namespace BangazonAPI.Controllers
                                 currentCustomer.CustomerProducts.Add(currentProduct);
                                 Customers.Add(currentCustomer);
                             }
-
                         }
                         else
                         {
                             Customers.Add(currentCustomer);
                         }
-
                     }
 
                     reader.Close();
                     return Ok(Customers);
+                }
+            }
+        }
+
+        // GET: api/Customer/5
+        [HttpGet("{CustomerId}", Name = "GetCustomer")]
+        public async Task<IActionResult> Get([FromRoute] int customerId)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT c.Id AS 'Customer Id', c.FirstName, c.LastName, c.AccountCreated, c.LastActive FROM Customer c";
+                    cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    Customer customer = null;
+
+                    if (reader.Read())
+                    {
+                        customer = new Customer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Customer Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            AccountCreated = reader.GetDateTime(reader.GetOrdinal("AccountCreated")),
+                            LastActive = reader.GetDateTime(reader.GetOrdinal("LastActive")),
+                        };
+                    }
+                    reader.Close();
+
+                    return Ok(customer);
                 }
             }
         }
@@ -164,7 +193,7 @@ namespace BangazonAPI.Controllers
         {
         }
 
-        // DELETE: api/ApiWithActions/5
+        // DELETE: api/Customer/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {

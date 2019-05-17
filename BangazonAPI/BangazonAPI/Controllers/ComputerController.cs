@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Data.SqlClient;
 
 namespace BangazonAPI.Controllers
 {
@@ -12,15 +14,31 @@ namespace BangazonAPI.Controllers
     [ApiController]
     public class ComputerController : ControllerBase
     {
-        // GET: api/Computer
+        private readonly IConfiguration _config;
+
+        public ComputerController(IConfiguration config)
+        {
+            _config = config;
+        }
+
+        public SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            }
+        }
+
+        //[Route("api")]
+        // GET api/Computer
         [HttpGet]
-        public IEnumerable<string> Get()
+        public ActionResult<IEnumerable<string>> Get()
         {
             return new string[] { "value1", "value2" };
         }
 
         // GET: api/Computer/5
-        [HttpGet("{id}", Name = "Get")]
+        [HttpGet("{id}", Name = "GetComputer")]
         public string Get(int id)
         {
             return "value";
@@ -38,7 +56,7 @@ namespace BangazonAPI.Controllers
         {
         }
 
-        // DELETE: api/ApiWithActions/5
+        // DELETE: api/Computer/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
