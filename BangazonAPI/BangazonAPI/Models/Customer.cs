@@ -21,3 +21,4 @@ namespace BangazonAPI.Models
 
     }
 }
+

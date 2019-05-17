@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
 
 namespace BangazonAPI.Models
 {
@@ -15,7 +18,9 @@ namespace BangazonAPI.Models
 
         public List<Employee> EmployeesAttending { get; set; } = new List<Employee>();
 
-        
-
     }
 }
+
+
+
+        
