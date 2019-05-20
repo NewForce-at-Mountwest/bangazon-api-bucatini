@@ -13,6 +13,8 @@ namespace BangazonAPI.Models
         public DateTime AccountCreated { get; set; }
         public DateTime LastActive { get; set; }
 
+        public bool Archived { get; set; }
+
         public List<Product> CustomerProducts = new List<Product>() { };
 
         //public List<Order> CustomerOrders = new List<Order>() { };

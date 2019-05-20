@@ -14,5 +14,7 @@ namespace BangazonAPI.Models
         public long AcctNumber { get; set; }
 
         public int CustomerId { get; set; }
+
+        public bool Archived { get; set; }
     }
 }
