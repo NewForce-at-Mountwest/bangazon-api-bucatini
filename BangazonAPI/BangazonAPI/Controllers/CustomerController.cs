@@ -56,28 +56,28 @@ namespace BangazonAPI.Controllers
 
                     if (include == "products")
                     {
-                        string productColumns = @"
-                        pt.Name AS 'ProductType',
+                        string productColumns = @",
                         p.Id AS 'ProductId',
                         p.Title AS 'ProductName', 
                         p.Description AS 'ProductDescription', 
                         p.Price AS 'ProductPrice',
                         p.Quantity AS 'QuantityAvailable',
-                        p.Archived AS 'ProductArchived'";
+                        p.Archived AS 'ProductArchived',
+                        pt.Name AS 'ProductType'";
 
                         string productTables = @"
                         JOIN Product p ON p.CustomerId = c.Id 
                         JOIN ProductType pt ON pt.Id = p.ProductTypeId";
 
-                        command = $@"{customerColumns}, 
+                        command = $@"{customerColumns}
                                     {productColumns} 
                                     {customerTable} 
                                     {productTables}";
                     }
 
-                    if (include == "payments")
+                    else if (include == "payments")
                     {
-                        string paymentColumns = @"
+                        string paymentColumns = @",
                         m.Id AS 'PaymentId',
                         m.AcctNumber AS 'AccountNumber',
                         m.Name AS 'AccountName',
@@ -86,7 +86,7 @@ namespace BangazonAPI.Controllers
                         string paymentTables = @"
                         JOIN PaymentType m ON m.CustomerId = c.Id";
 
-                        command = $@"{customerColumns},
+                        command = $@"{customerColumns}
                                     {paymentColumns}
                                     {customerTable}
                                     {paymentTables}";
@@ -129,7 +129,7 @@ namespace BangazonAPI.Controllers
                                 Title = reader.GetString(reader.GetOrdinal("ProductName")),
                                 Description = reader.GetString(reader.GetOrdinal("ProductDescription")),
                                 Quantity = reader.GetInt32(reader.GetOrdinal("QuantityAvailable")),
-                                Price = reader.GetDouble(reader.GetOrdinal("ProductPrice")),
+                                Price = reader.GetDecimal(reader.GetOrdinal("ProductPrice")),
                                 Archived = reader.GetBoolean(reader.GetOrdinal("ProductArchived"))
                             };
 
@@ -146,7 +146,7 @@ namespace BangazonAPI.Controllers
                             }
                         }
 
-                        if (include == "payments")
+                        else if (include == "payments")
 
                         {
                             PaymentType currentPaymentType = new PaymentType
@@ -225,24 +225,60 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO Customer (FirstName, LastName, AccountCreated, LastActive, Archived) OUTPUT INSERTED.Id VALUES (@firstName, @lastName, @accountCreated, @lastActive, @archived)";
+                    cmd.CommandText = @"INSERT INTO Customer (FirstName, LastName, AccountCreated, LastActive, Archived) OUTPUT INSERTED.Id VALUES (@firstName, @lastName, GetDate(), GetDate(), 0)";
                     cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
                     cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
-                    cmd.Parameters.Add(new SqlParameter("@accountCreated", DateTime.Today));
-                    cmd.Parameters.Add(new SqlParameter("@lastActive", DateTime.Today));
-                    cmd.Parameters.Add(new SqlParameter("@archived", 0));
+                    //cmd.Parameters.Add(new SqlParameter("@accountCreated", DateTime.Today));
+                    //cmd.Parameters.Add(new SqlParameter("@lastActive", DateTime.Today));
+                    //cmd.Parameters.Add(new SqlParameter("@archived", 0));
 
                     int newId = (int)cmd.ExecuteScalar();
                     customer.Id = newId;
-                    return CreatedAtRoute("GetCustomer", new { Id = newId }, customer);
+                    return Created($"/api/customer/{newId}", customer);
+                    /*return CreatedAtRoute("GetCustomer", new { Id = newId }, customer)*/
+                    ;
                 }
             }
         }
 
         // PUT: api/Customer/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> Put([FromRoute] int Id, [FromBody] Customer customer)
         {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE Customer SET FirstName = @firstName, LastName = @lastName WHERE Id = @customerId";
+                        cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
+                        //cmd.Parameters.Add(new SqlParameter("@slackHandle", instructor.SlackHandle));
+                        //cmd.Parameters.Add(new SqlParameter("@cohortId", instructor.CohortId));
+                        cmd.Parameters.Add(new SqlParameter("@customerId", Id));
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected.");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!CustomerExists(Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         // DELETE: api/Customer/5

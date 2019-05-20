@@ -166,7 +166,7 @@ namespace TestBangazonAPI
         public async Task Test_Modify_Customer()
         {
 
-            // We're going to change a student's name! This is their new name.
+            // We're going to change a customer's name! This is their new name.
             string newFirstName = "Unhappy";
 
             using (HttpClient client = new APIClientProvider().Client)
@@ -179,12 +179,12 @@ namespace TestBangazonAPI
                 customer.FirstName = newFirstName;
 
                 // Convert them to JSON
-                string modifiedTestAsJSON = JsonConvert.SerializeObject(customer);
+                string modifiedCustomerAsJSON = JsonConvert.SerializeObject(customer);
 
                 // Make a PUT request with the new info
                 HttpResponseMessage response = await client.PutAsync(
                     $"api/customer/{customer.Id}",
-                    new StringContent(modifiedTestAsJSON, Encoding.UTF8, "application/json")
+                    new StringContent(modifiedCustomerAsJSON, Encoding.UTF8, "application/json")
                 );
 
 
