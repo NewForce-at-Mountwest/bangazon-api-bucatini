@@ -127,16 +127,15 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO PaymentType ([Name], LastName, AccountCreated, LastActive, Archived) OUTPUT INSERTED.Id VALUES (@firstName, @lastName, @accountCreated, @lastActive, @archived)";
-                    cmd.Parameters.Add(new SqlParameter("@firstName", paymentType.Name));
-                    cmd.Parameters.Add(new SqlParameter("@lastName", paymentType.LastName));
-                    cmd.Parameters.Add(new SqlParameter("@accountCreated", DateTime.Today));
-                    cmd.Parameters.Add(new SqlParameter("@lastActive", DateTime.Today));
-                    cmd.Parameters.Add(new SqlParameter("@archived", 0));
+                    cmd.CommandText = @"INSERT INTO PaymentType (AcctNumber, [Name], CustomerId, Archived) OUTPUT INSERTED.Id VALUES (@AcctNumber, @Name, @CustomerId, @archived)";
+                    cmd.Parameters.Add(new SqlParameter("@AcctNumber", paymentType.AcctNumber));
+                    cmd.Parameters.Add(new SqlParameter("@Name", paymentType.Name));
+                    cmd.Parameters.Add(new SqlParameter("@CustomerId", paymentType.CustomerId));
+                    cmd.Parameters.Add(new SqlParameter("@Archived", 0));
 
                     int newId = (int)cmd.ExecuteScalar();
-                    customer.Id = newId;
-                    return CreatedAtRoute("GetCustomer", new { Id = newId }, customer);
+                    paymentType.Id = newId;
+                    return CreatedAtRoute("GetCustomer", new { Id = newId }, paymentType);
                 }
             }
         }
