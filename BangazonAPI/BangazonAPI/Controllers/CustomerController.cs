@@ -99,7 +99,7 @@ namespace BangazonAPI.Controllers
 
                     if (q != null)
                     {
-                        command += $" WHERE c.FirstName LIKE '{q}' OR c.LastName LIKE '{q}'";
+                        command += $" WHERE c.FirstName LIKE '%{q}%' OR c.LastName LIKE '%{q}%' OR c.AccountCreated LIKE '%{q}%' OR c.LastActive LIKE '%{q}%' OR c.Archived LIKE '%{q}%'";
                     }
 
 
@@ -184,7 +184,7 @@ namespace BangazonAPI.Controllers
 
         // GET: api/Customer/5
         [HttpGet("{CustomerId}", Name = "GetCustomer")]
-        public async Task<IActionResult> Get(int customerId, string _include/)
+        public async Task<IActionResult> Get(int customerId, string _include)
         {
             using (SqlConnection conn = Connection)
             {
