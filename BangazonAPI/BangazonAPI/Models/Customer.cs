@@ -22,4 +22,9 @@ namespace BangazonAPI.Models
         public List<PaymentType> CustomerPaymentTypes = new List<PaymentType>() { };
 
     }
+
 }
+
+
+
+
