@@ -81,7 +81,7 @@ namespace BangazonAPI.Controllers
 
 
 
-        [HttpGet("{id}", Name = "PaymentType")]
+        [HttpGet("{Id}", Name = "PaymentType")]
         public async Task<IActionResult> GetSinglePaymentType([FromRoute] int Id)
         {
             using (SqlConnection conn = Connection)
@@ -93,7 +93,7 @@ namespace BangazonAPI.Controllers
                         SELECT
                             Id, [Name], AcctNumber, CustomerId, Archived
                         FROM PaymentType
-                        WHERE Id = @id";
+                        WHERE Id = @Id";
                     cmd.Parameters.Add(new SqlParameter("@Id", Id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
@@ -127,112 +127,136 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO PaymentType (AcctNumber, [Name], CustomerId, Archived) OUTPUT INSERTED.Id VALUES (@AcctNumber, @Name, @CustomerId, @archived)";
+                    cmd.CommandText = @"INSERT INTO PaymentType (AcctNumber, [Name], CustomerId, Archived) OUTPUT INSERTED.Id VALUES (@AcctNumber, @Name, @CustomerId, 0)";
                     cmd.Parameters.Add(new SqlParameter("@AcctNumber", paymentType.AcctNumber));
                     cmd.Parameters.Add(new SqlParameter("@Name", paymentType.Name));
                     cmd.Parameters.Add(new SqlParameter("@CustomerId", paymentType.CustomerId));
-                    cmd.Parameters.Add(new SqlParameter("@Archived", 0));
 
                     int newId = (int)cmd.ExecuteScalar();
                     paymentType.Id = newId;
-                    return CreatedAtRoute("GetCustomer", new { Id = newId }, paymentType);
+                    return CreatedAtRoute("PaymentType", new { Id = newId }, paymentType);
                 }
             }
         }
 
 
+        // PUT: api/PaymentType/1
+        [HttpPut("{Id}")]
+        public async Task<IActionResult> Put([FromRoute] int Id, [FromBody] PaymentType paymentType)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE PaymentType
+                                                SET Name = @Name,
+                                                AcctNumber = @AcctNumber,
+                                                CustomerId = @CustomerId,
+                                                Archived = 0
+                                                             WHERE Id = @Id";
+
+                        cmd.Parameters.Add(new SqlParameter("@Name", paymentType.Name));
+                        cmd.Parameters.Add(new SqlParameter("@AcctNumber", paymentType.AcctNumber));
+                        cmd.Parameters.Add(new SqlParameter("@CustomerId", paymentType.CustomerId));
+                        cmd.Parameters.Add(new SqlParameter("@Id", Id));
 
 
-        //next put
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected.");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!PaymentTypeExists(Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        // DELETE: Code for deleting a payment type--soft delete actually changes 'isActive' to 0 (false)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePaymentType([FromRoute] int id, bool Delete)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+
+                        if (Delete == true)
+                        {
+                            cmd.CommandText = @"DELETE PaymentType
+                                              WHERE Id = @Id";
+                        }
+                        else
+                        {
+                            cmd.CommandText = @"UPDATE PaymentType
+                                            SET Archived = 1
+                                            WHERE Id = @Id";
+                        }
+
+                        cmd.Parameters.Add(new SqlParameter("@Id", id));
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!PaymentTypeExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        private bool PaymentTypeExists(int paymentTypeId)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT Id, [Name], AcctNumber, CustomerId
+                        FROM PaymentType
+                        WHERE Id = @paymentTypeId";
+                    cmd.Parameters.Add(new SqlParameter("@paymentTypeId", paymentTypeId));
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    return reader.Read();
+                }
+            }
+        }
     }
+}
     
 
 
 
 
-}
 
-//        // POST: api/Customer
-//        [HttpPost]
-//        public async Task<IActionResult> Post([FromBody] Customer customer)
-//        {
-//            using (SqlConnection conn = Connection)
-//            {
-//                conn.Open();
-//                using (SqlCommand cmd = conn.CreateCommand())
-//                {
-//                    cmd.CommandText = @"INSERT INTO Customer (FirstName, LastName, AccountCreated, LastActive, Archived) OUTPUT INSERTED.Id VALUES (@firstName, @lastName, @accountCreated, @lastActive, @archived)";
-//                    cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
-//                    cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
-//                    cmd.Parameters.Add(new SqlParameter("@accountCreated", DateTime.Today));
-//                    cmd.Parameters.Add(new SqlParameter("@lastActive", DateTime.Today));
-//                    cmd.Parameters.Add(new SqlParameter("@archived", 0));
 
-//                    int newId = (int)cmd.ExecuteScalar();
-//                    customer.Id = newId;
-//                    return CreatedAtRoute("GetCustomer", new { Id = newId }, customer);
-//                }
-//            }
-//        }
-
-//        // PUT: api/Customer/5
-//        [HttpPut("{id}")]
-//        public void Put(int id, [FromBody] string value)
-//        {
-//        }
-
-//        // DELETE: api/Customer/5
-//        [HttpDelete("{CustomerId}")]
-//        public async Task<IActionResult> Delete([FromRoute] int customerId)
-//        {
-//            try
-//            {
-//                using (SqlConnection conn = Connection)
-//                {
-//                    conn.Open();
-//                    using (SqlCommand cmd = conn.CreateCommand())
-//                    {
-//                        cmd.CommandText = @"DELETE FROM Customer WHERE CustomerId = @customerId";
-//                        cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
-
-//                        int rowsAffected = cmd.ExecuteNonQuery();
-//                        if (rowsAffected > 0)
-//                        {
-//                            return new StatusCodeResult(StatusCodes.Status204NoContent);
-//                        }
-//                        throw new Exception("No rows affected.");
-//                    }
-//                }
-//            }
-//            catch (Exception)
-//            {
-//                if (!CustomerExists(customerId))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-//        }
-//        private bool CustomerExists(int customerId)
-//        {
-//            using (SqlConnection conn = Connection)
-//            {
-//                conn.Open();
-//                using (SqlCommand cmd = conn.CreateCommand())
-//                {
-//                    cmd.CommandText = @"
-//                        SELECT Id, FirstName, LastName, AccountCreated
-//                        FROM Customer
-//                        WHERE Id = @customerId";
-//                    cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
-
-//                    SqlDataReader reader = cmd.ExecuteReader();
-//                    return reader.Read();
-//                }
-//            }
-//        }
-//    }
-//}
