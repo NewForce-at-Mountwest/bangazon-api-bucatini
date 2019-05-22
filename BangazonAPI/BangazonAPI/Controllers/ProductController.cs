@@ -228,7 +228,7 @@ namespace BangazonAPI.Controllers
                         }
                         else
                         {
-                            cmd.CommandText = @"UPDATE PaymentType SET Archived=1 WHERE Id =@id";
+                            cmd.CommandText = @"UPDATE Product SET Archived=1 WHERE Id =@id";
                         }
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
