@@ -50,7 +50,8 @@ namespace BangazonAPI.Controllers
                         Price AS 'Price',
                         Title AS 'Title', 
                         Description AS 'Description',
-                        Quantity AS 'Quantity'";
+                        Quantity AS 'Quantity',
+                        Archived AS 'Archived'";
 
                     
                     
@@ -77,6 +78,7 @@ namespace BangazonAPI.Controllers
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             Description = reader.GetString(reader.GetOrdinal("Description")),
                             Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))
                         };
 
 
@@ -108,7 +110,8 @@ namespace BangazonAPI.Controllers
                         Price AS 'Price',
                         Title AS 'Title', 
                         Description AS 'Description',
-                        Quantity AS 'Quantity'
+                        Quantity AS 'Quantity',
+                        Archived As 'Archived'
                         FROM Product
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -126,7 +129,8 @@ namespace BangazonAPI.Controllers
                             Price = reader.GetDecimal(reader.GetOrdinal("Price")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             Description = reader.GetString(reader.GetOrdinal("Description")),
-                            Quantity = reader.GetInt32(reader.GetOrdinal("Quantity"))
+                            Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))
                         };
                     }
                     reader.Close();
@@ -228,7 +232,7 @@ namespace BangazonAPI.Controllers
                         }
                         else
                         {
-                            cmd.CommandText = @"UPDATE Product SET Archived=1 WHERE Id =@id";
+                            cmd.CommandText = @"UPDATE Product SET Archived=1 WHERE Id=@id";
                         }
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
