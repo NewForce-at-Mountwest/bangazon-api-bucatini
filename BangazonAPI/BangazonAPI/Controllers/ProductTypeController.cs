@@ -47,7 +47,8 @@ namespace BangazonAPI.Controllers {
 
                     string ProductTypeColumns = @"
                         SELECT Id AS 'ProductType Id', 
-                        Name AS 'Name'"; 
+                        Name AS 'Name',
+                        Archived As 'Archived'"; 
                         
 
 
@@ -69,7 +70,8 @@ namespace BangazonAPI.Controllers {
                         ProductType currentProductType = new ProductType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("ProductType Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name"))};
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))};
 
 
 
@@ -95,7 +97,8 @@ namespace BangazonAPI.Controllers {
                 {
                     cmd.CommandText = @"
                         SELECT Id AS 'ProductType Id', 
-                        Name AS 'Name'
+                        Name,
+                        Archived,
                         FROM ProductType
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -108,7 +111,8 @@ namespace BangazonAPI.Controllers {
                         ProductType = new ProductType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("ProductType Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name"))
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))
                         };
                     }
                     reader.Close();
@@ -126,9 +130,9 @@ namespace BangazonAPI.Controllers {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO ProductType (Name)
+                    cmd.CommandText = @"INSERT INTO ProductType (Name, Archived)
                                         OUTPUT INSERTED.Id
-                                        VALUES (@Name)";
+                                        VALUES (@Name, 0)";
                     cmd.Parameters.Add(new SqlParameter("@Name", ProductType.Name));
 
 
@@ -150,7 +154,8 @@ namespace BangazonAPI.Controllers {
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE ProductType
-                                            SET Name=@Name
+                                            SET Name=@Name,
+                                            Archived = 0,    
                                             WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@Name", ProductType.Name));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -193,7 +198,7 @@ namespace BangazonAPI.Controllers {
                         }
                         else
                         {
-                            cmd.CommandText = @"UPDATE PaymentType SET Archived=1 WHERE Id =@id";
+                            cmd.CommandText = @"UPDATE ProductType SET Archived=1 WHERE Id =@id";
                         }
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
@@ -228,7 +233,7 @@ namespace BangazonAPI.Controllers {
                 {
                     cmd.CommandText = @"
                         SELECT
-                            Id, Name
+                            Id, Name, Archived
                         FROM ProductType
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
