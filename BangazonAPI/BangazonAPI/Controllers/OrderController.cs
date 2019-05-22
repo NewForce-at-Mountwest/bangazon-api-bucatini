@@ -47,7 +47,8 @@ namespace BangazonAPI.Controllers
                         SELECT o.Id AS 'OrderId',
                         o.CustomerId AS 'CustomerId',
                         o.PaymentTypeId AS 'PaymentTypeId',
-                        o.Archived AS 'OrderArchived'";
+                        o.Archived AS 'OrderArchived',
+                        o.IsComplete AS 'Completed'";
 
                     string orderTable = "FROM [Order] o";
 
@@ -113,6 +114,7 @@ namespace BangazonAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
                             CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                             PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId")),
+                            //IsComplete = reader.GetBoolean(reader.GetOrdinal("Completed")),
                             Archived = reader.GetBoolean(reader.GetOrdinal("OrderArchived"))
                         };
 
@@ -180,57 +182,60 @@ namespace BangazonAPI.Controllers
 
         // GET: api/Order/5
         [HttpGet("{OrderId}", Name = "GetOrder")]
-        public async Task<IActionResult> Get([FromRoute] int customerId)
+        public async Task<IActionResult> Get([FromRoute] int orderId)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT c.Id AS 'Customer Id', c.FirstName, c.LastName, c.AccountCreated, c.LastActive, c.Archived FROM Customer c WHERE c.Id = @customerId";
-                    cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
+                    cmd.CommandText = @"
+                        SELECT o.Id AS 'OrderId',
+                        o.CustomerId AS 'CustomerId',
+                        o.PaymentTypeId AS 'PaymentTypeId',
+                        o.Archived AS 'OrderArchived',
+                        FROM Order o WHERE o.Id = @orderId";
+                    //o.IsComplete AS 'Completed',
+                    cmd.Parameters.Add(new SqlParameter("@orderId", orderId));
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    Customer customer = null;
+                    Order order = null;
 
                     if (reader.Read())
                     {
-                        customer = new Customer
+                        order = new Order
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Customer Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            AccountCreated = reader.GetDateTime(reader.GetOrdinal("AccountCreated")),
-                            LastActive = reader.GetDateTime(reader.GetOrdinal("LastActive")),
-                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))
+                            Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                            PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId")),
+                            //IsComplete = reader.GetBoolean(reader.GetOrdinal("Completed")),
+                            Archived = reader.GetBoolean(reader.GetOrdinal("OrderArchived"))
                         };
                     }
                     reader.Close();
 
-                    return Ok(customer);
+                    return Ok(order);
                 }
             }
         }
 
         // POST: api/Order
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Customer customer)
+        public async Task<IActionResult> Post([FromBody] Order order)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO Customer (FirstName, LastName, AccountCreated, LastActive, Archived) OUTPUT INSERTED.Id VALUES (@firstName, @lastName, GetDate(), GetDate(), 0)";
-                    cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
-                    cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
-                    //cmd.Parameters.Add(new SqlParameter("@accountCreated", DateTime.Today));
-                    //cmd.Parameters.Add(new SqlParameter("@lastActive", DateTime.Today));
-                    //cmd.Parameters.Add(new SqlParameter("@archived", 0));
+                    cmd.CommandText = @"INSERT INTO Order (CustomerId, PaymentTypeId, Archived) OUTPUT INSERTED.Id VALUES (@customerId, @paymentId, 0)";
+                    cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
+                    cmd.Parameters.Add(new SqlParameter("@lastName", order.PaymentTypeId));
+                    
 
                     int newId = (int)cmd.ExecuteScalar();
-                    customer.Id = newId;
-                    return Created($"/api/customer/{newId}", customer);
+                    order.Id = newId;
+                    return Created($"/api/order/{newId}", order);
                     /*return CreatedAtRoute("GetCustomer", new { Id = newId }, customer)*/
                     ;
                 }
@@ -239,7 +244,7 @@ namespace BangazonAPI.Controllers
 
         // PUT: api/Order/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put([FromRoute] int Id, [FromBody] Customer customer)
+        public async Task<IActionResult> Put([FromRoute] int Id, [FromBody] Order order)
         {
             try
             {
@@ -248,12 +253,11 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"UPDATE Customer SET FirstName = @firstName, LastName = @lastName WHERE Id = @customerId";
-                        cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
-                        cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
-                        //cmd.Parameters.Add(new SqlParameter("@slackHandle", instructor.SlackHandle));
-                        //cmd.Parameters.Add(new SqlParameter("@cohortId", instructor.CohortId));
-                        cmd.Parameters.Add(new SqlParameter("@customerId", Id));
+                        cmd.CommandText = @"UPDATE Order SET CustomerId = @customerId, PaymentTypeId = @paymentTypeId WHERE Id = @orderId";
+                        cmd.Parameters.Add(new SqlParameter("@firstName", order.CustomerId));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", order.PaymentTypeId));
+                        
+                        cmd.Parameters.Add(new SqlParameter("@orderId", Id));
 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)

@@ -47,7 +47,7 @@ namespace TestBangazonAPI
 
         }
 
-        // Delete a student in the database and make sure we get a no content status code back
+        // Delete a customer in the database and make sure we get a no content status code back
         
         public async Task deleteCustomer(Customer testCustomer, HttpClient client)
         {
@@ -65,7 +65,7 @@ namespace TestBangazonAPI
             using (HttpClient client = new APIClientProvider().Client)
             {
 
-                // Call the route to get all our students; wait for a response object
+                // Call the route to get all our customers; wait for a response object
                 HttpResponseMessage response = await client.GetAsync("api/customer");
 
                 // Make sure that a response comes back at all
@@ -74,13 +74,13 @@ namespace TestBangazonAPI
                 // Read the response body as JSON
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                // Convert the JSON to a list of student instances
+                // Convert the JSON to a list of customer instances
                 List<Customer> customerList = JsonConvert.DeserializeObject<List<Customer>>(responseBody);
 
                 // Did we get back a 200 OK status code?
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-                // Are there any students in the list?
+                // Are there any customers in the list?
                 Assert.True(customerList.Count > 0);
             }
         }
@@ -119,10 +119,9 @@ namespace TestBangazonAPI
         [Fact]
         public async Task Test_Get_NonExistent_Customer_Fails()
         {
-
             using (var client = new APIClientProvider().Client)
             {
-                // Try to get a student with an enormously huge Id
+                // Try to get a customer with an enormously huge Id
                 HttpResponseMessage response = await client.GetAsync("api/customer/999999999");
 
                 // It should bring back a 204 no content error
@@ -130,14 +129,13 @@ namespace TestBangazonAPI
             }
         }
 
-
         [Fact]
         public async Task Test_Create_And_Delete_Customer()
         {
             using (var client = new APIClientProvider().Client)
             {
 
-                // Create a new David
+                // Create a new customer
                 Customer customer = await createCustomer(client);
 
                 // Make sure his info checks out
@@ -172,7 +170,7 @@ namespace TestBangazonAPI
             using (HttpClient client = new APIClientProvider().Client)
             {
 
-                // Create a new student
+                // Create a new customer
                 Customer customer = await createCustomer(client);
 
                 // Change their first name

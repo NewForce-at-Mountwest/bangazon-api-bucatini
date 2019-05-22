@@ -12,6 +12,7 @@ namespace BangazonAPI.Models
         public bool Archived { get; set; }
         public int PaymentTypeId { get; set; }
         public int CustomerId { get; set; }
+        //public bool IsComplete { get; set; }
         public PaymentType PaymentType { get; set; }
         public Customer Customer { get; set; }
         
