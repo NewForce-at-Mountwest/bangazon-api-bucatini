@@ -186,7 +186,7 @@ namespace BangazonAPI.Controllers
             }
         }
 
-        // DELETE: Code for deleting a payment type--soft delete actually changes 'isActive' to 0 (false)
+        // DELETE: Code for deleting a payment type--soft delete actually changes 'Archived' to 1 (true)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePaymentType([FromRoute] int id, bool Delete)
         {
