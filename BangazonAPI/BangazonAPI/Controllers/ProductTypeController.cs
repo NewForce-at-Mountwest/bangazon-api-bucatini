@@ -155,7 +155,7 @@ namespace BangazonAPI.Controllers {
                     {
                         cmd.CommandText = @"UPDATE ProductType
                                             SET Name=@Name,
-                                            Archived = 0,    
+                                            Archived = 0    
                                             WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@Name", ProductType.Name));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
