@@ -51,7 +51,7 @@ namespace TestBangazonAPI
         
         public async Task deleteCustomer(Customer testCustomer, HttpClient client)
         {
-            HttpResponseMessage deleteResponse = await client.DeleteAsync($"api/customer/{testCustomer.Id}");
+            HttpResponseMessage deleteResponse = await client.DeleteAsync($"api/customer/{testCustomer.Id}?delete=True");
             deleteResponse.EnsureSuccessStatusCode();
             Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 

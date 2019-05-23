@@ -74,7 +74,7 @@ namespace BangazonAPI.Controllers
                         command = $@"{customerColumns}
                                     {productColumns} 
                                     {customerTable} 
-                                    {productTables}";
+                                    {productTables} WHERE c.Archived = 0";
                     }
 
                     else if (_include == "payments")
@@ -92,12 +92,12 @@ namespace BangazonAPI.Controllers
                         command = $@"{customerColumns}
                                     {paymentColumns}
                                     {customerTable}
-                                    {paymentTables}";
+                                    {paymentTables} WHERE c.Archived = 0";
                     }
 
                     else
                     {
-                        command = $"{customerColumns} {customerTable}";
+                        command = $"{customerColumns} {customerTable} WHERE c.Archived = 0";
                     }
 
                     if (q != null)
@@ -192,8 +192,7 @@ namespace BangazonAPI.Controllers
         [HttpGet("{CustomerId}", Name = "GetCustomer")]
         public async Task<IActionResult> Get(int customerId, string _include)
         {
-            //try
-            //{
+            
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
@@ -385,7 +384,7 @@ namespace BangazonAPI.Controllers
 
         // DELETE: api/Customer/5
         [HttpDelete("{CustomerId}")]
-        public async Task<IActionResult> Delete([FromRoute] int customerId)
+        public async Task<IActionResult> Delete([FromRoute] int customerId, bool delete)
         {
             try
             {
@@ -394,7 +393,15 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM Customer WHERE CustomerId = @customerId";
+                        if (delete == true)
+                        {
+                            cmd.CommandText = @"DELETE FROM Customer WHERE Id = @customerId";
+                        }
+                        else
+                        {
+                            cmd.CommandText = @"UPDATE Customer SET Archived=1 WHERE Id=@customerId";
+                        }
+                        
                         cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
 
                         int rowsAffected = cmd.ExecuteNonQuery();

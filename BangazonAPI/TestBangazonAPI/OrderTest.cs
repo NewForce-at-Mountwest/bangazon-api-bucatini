@@ -165,7 +165,7 @@ namespace TestBangazonAPI
         {
 
             // We're going to change an order's archived status! This is the new status.
-            bool newStatus = true;
+            int newCustomer = 3;
 
             using (HttpClient client = new APIClientProvider().Client)
             {
@@ -174,7 +174,7 @@ namespace TestBangazonAPI
                 Order order  = await createOrder(client);
 
                 // Change their first name
-                order.Archived = newStatus;
+                order.CustomerId = newCustomer;
 
                 // Convert them to JSON
                 string modifiedOrderAsJSON = JsonConvert.SerializeObject(order);
@@ -207,7 +207,7 @@ namespace TestBangazonAPI
                 Assert.Equal(HttpStatusCode.OK, getTestOrder.StatusCode);
 
                 // Make sure the archived status was in fact updated
-                Assert.Equal(newStatus, modifiedOrder.Archived);
+                Assert.Equal(newCustomer, modifiedOrder.CustomerId);
 
                 // Clean up after ourselves- delete him
                 deleteOrder(modifiedOrder, client);

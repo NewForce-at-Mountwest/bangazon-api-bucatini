@@ -68,7 +68,7 @@ namespace BangazonAPI.Controllers
                         command = $@"{orderColumns}
                         {customerColumns}
                         {orderTable}
-                        {customerTables}
+                        {customerTables} WHERE o.Archived = 0
                         ";
                     }
 
@@ -87,7 +87,7 @@ namespace BangazonAPI.Controllers
                         command = $@"{orderColumns}
                         {productColumns}
                         {orderTable}
-                        {productTables}
+                        {productTables} WHERE o.Archived = 0
                         ";
                     }
 
@@ -114,23 +114,18 @@ namespace BangazonAPI.Controllers
 
                     while (reader.Read())
                     {
-
-                        Order currentOrder = new Order
+                        Order order = new Order()
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
                             CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                             Archived = reader.GetBoolean(reader.GetOrdinal("OrderArchived")),
                         };
-
-
                         if (!reader.IsDBNull(reader.GetOrdinal("PaymentTypeId")))
                         {
-                            currentOrder.PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId"));
+                            order.PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId"));
                         }
 
-
-                        else if (_include == "customers")
-
+                        if (_include == "customers")
                         {
                             Customer currentCustomer = new Customer
                             {
@@ -142,9 +137,10 @@ namespace BangazonAPI.Controllers
                                 Archived = reader.GetBoolean(reader.GetOrdinal("CustomerArchived"))
                             };
 
-                            currentOrder.Customer = (currentCustomer);
+                                order.Customer = (currentCustomer);
+                                Orders.Add(order);
+                            }
 
-                        }
 
                         else if (_include == "products")
 
@@ -156,26 +152,24 @@ namespace BangazonAPI.Controllers
                                 Description = reader.GetString(reader.GetOrdinal("ProductDescription")),
                                 Price = reader.GetDecimal(reader.GetOrdinal("ProductPrice"))
                             };
+
                             List<Product> OrderProducts = new List<Product>();
 
-                            if (Orders.Any(o => o.Id == currentOrder.Id))
+                            if (Orders.Any(o => o.Id == order.Id))
                             {
-                                Order thisOrder = Orders.Where(o => o.Id == currentOrder.Id).FirstOrDefault();
+                                Order thisOrder = Orders.Where(o => o.Id == order.Id).FirstOrDefault();
                                 thisOrder.OrderProducts.Add(currentProduct);
                             }
                             else
                             {
-                                currentOrder.OrderProducts.Add(currentProduct);
-                                Orders.Add(currentOrder);
+                                order.OrderProducts.Add(currentProduct);
+                                Orders.Add(order);
                             }
                         }
-                        //Add Products to list of order's product
-                        //    currentOrder.OrderProducts = (currentProduct);
-
-                        //}
+                        
                         else
                         {
-                            Orders.Add(currentOrder);
+                            Orders.Add(order);
                         }
                     }
 
@@ -184,24 +178,81 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
+    
+
+        
 
         // GET: api/Order/5
         [HttpGet("{OrderId}", Name = "GetOrder")]
-        public async Task<IActionResult> Get([FromRoute] int orderId)
+        public async Task<IActionResult> Get([FromRoute] int orderId, string _include)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
+                    string command = "";
+
+                    string orderColumns = @"
                         SELECT o.Id AS 'OrderId',
                         o.CustomerId AS 'CustomerId',
                         o.PaymentTypeId AS 'PaymentTypeId',
-                        o.Archived AS 'OrderArchived'
-                        FROM [Order] o WHERE o.Id = @orderId";
-                    
-                    cmd.Parameters.Add(new SqlParameter("@orderId", orderId));
+                        o.Archived AS 'OrderArchived'";
+
+                    string orderTable = @"FROM [Order] o";
+
+                    if (_include == "customers")
+                    {
+                        string customerColumns = @",
+                        c.Id AS 'CustomerId',
+                        c.FirstName AS 'CustomerFirstName',
+                        c.LastName AS 'CustomerLastName',
+                        c.AccountCreated AS 'AccountCreated',
+                        c.LastActive AS 'LastActive',
+                        c.Archived AS 'CustomerArchived'";
+
+                        string customerTables = @"
+                        JOIN Customer c ON c.Id = o.CustomerId";
+
+                        command = $@"{orderColumns}
+                                     {customerColumns}
+                                     {orderTable}
+                                     {customerTables} WHERE o.Id = '{orderId}'";
+                    }
+
+                    else if (_include == "products")
+                    {
+                        string productColumns = @",
+                        p.Id AS 'ProductId',
+                        p.Price AS 'ProductPrice',
+                        p.Title AS 'ProductTitle',
+                        p.Description AS 'ProductDescription'";
+
+                        string productTables = @"
+                        JOIN OrderProduct op ON op.OrderId = o.Id
+                        JOIN Product p ON p.Id = op.ProductId";
+
+                        command = $@"{orderColumns}
+                        {productColumns}
+                        {orderTable}
+                        {productTables} WHERE o.Id = '{orderId}'";
+                    }
+
+                    else if (_include == "completed")
+                    {
+                        string completedFilter = "WHERE o.PaymentTypeId IS NOT NULL";
+
+                        command = $@"{orderColumns}
+                        {orderTable}
+                        {completedFilter} WHERE o.id = '{orderId}'";
+                    }
+
+                    else
+                    {
+                        command = $"{orderColumns} {orderTable} WHERE o.Id = '{orderId}'";
+                    }
+
+                    cmd.CommandText = command;
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     Order order = null;
@@ -219,13 +270,47 @@ namespace BangazonAPI.Controllers
                         {
                             order.PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId"));
                         }
-                    }
-                    reader.Close();
 
-                    return Ok(order);
+                        if (_include == "customers")
+                        {
+                            Customer currentCustomer = new Customer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                FirstName = reader.GetString(reader.GetOrdinal("CustomerFirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("CustomerLastName")),
+                                AccountCreated = reader.GetDateTime(reader.GetOrdinal("AccountCreated")),
+                                LastActive = reader.GetDateTime(reader.GetOrdinal("LastActive")),
+                                Archived = reader.GetBoolean(reader.GetOrdinal("CustomerArchived"))
+                            };
+
+                            order.Customer = (currentCustomer);
+
+                        }
+
+
+                        else if (_include == "products")
+
+                        {
+                            Product currentProduct = new Product
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                                Title = reader.GetString(reader.GetOrdinal("ProductTitle")),
+                                Description = reader.GetString(reader.GetOrdinal("ProductDescription")),
+                                Price = reader.GetDecimal(reader.GetOrdinal("ProductPrice"))
+                            };
+
+                            List<Product> OrderProducts = new List<Product>();
+                            order.OrderProducts.Add(currentProduct);
+                        }
+
+                    reader.Close();
+                    
                 }
+                    return Ok(order);
             }
         }
+    }
+                    
 
         // POST: api/Order
         [HttpPost]
@@ -262,8 +347,8 @@ namespace BangazonAPI.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE [Order] SET CustomerId = @customerId, PaymentTypeId = @paymentTypeId WHERE Id = @orderId";
-                        cmd.Parameters.Add(new SqlParameter("@firstName", order.CustomerId));
-                        cmd.Parameters.Add(new SqlParameter("@lastName", order.PaymentTypeId));
+                        cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
+                        cmd.Parameters.Add(new SqlParameter("@paymentTypeId", order.PaymentTypeId));
                         
                         cmd.Parameters.Add(new SqlParameter("@orderId", Id));
 
