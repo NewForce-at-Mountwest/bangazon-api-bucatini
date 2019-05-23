@@ -106,8 +106,8 @@ namespace TestBangazonAPI
                 // Did we get back what we expected to get back? 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Equal(false, order.Archived);
-                //Assert.Equal(1, order.CustomerId);
-                //Assert.Equal(1, order.PaymentType);
+                Assert.Equal(1, order.CustomerId);
+                Assert.Equal(1, order.PaymentTypeId);
 
                 // Clean up after ourselves- delete customer!
                 deleteOrder(order, client);
