@@ -1,4 +1,6 @@
-﻿using System;
+﻿//Order Controller - Charles Belcher
+
+using System;
 using System.Collections.Generic;
 using BangazonAPI.Models;
 using System.Linq;
@@ -40,7 +42,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-
+                    //Base SQL Query
                     string command = "";
 
                     string orderColumns = @"
@@ -51,7 +53,7 @@ namespace BangazonAPI.Controllers
 
                     string orderTable = "FROM [Order] o";
 
-
+                    //Add Customers SQL Parameters
                     if (_include == "customers")
                     {
                         string customerColumns = @",
@@ -72,6 +74,7 @@ namespace BangazonAPI.Controllers
                         ";
                     }
 
+                    // Add Products SQL Parameters
                     else if (_include == "products")
                     {
                         string productColumns = @",
@@ -91,6 +94,7 @@ namespace BangazonAPI.Controllers
                         ";
                     }
 
+                    //Add Completed Orders Parameter
                     else if (_include == "completed")
                     {
                         string completedFilter = "WHERE o.PaymentTypeId IS NOT NULL";
@@ -101,6 +105,7 @@ namespace BangazonAPI.Controllers
                         ";
                     }
 
+                    //Base Orders SQL Query String
                     else
                     {
                         command = $"{orderColumns} {orderTable}";
@@ -110,21 +115,27 @@ namespace BangazonAPI.Controllers
 
                     cmd.CommandText = command;
                     SqlDataReader reader = cmd.ExecuteReader();
+
+                    //Empty List Of Type <Order> To Be Populated
                     List<Order> Orders = new List<Order>();
 
                     while (reader.Read())
                     {
+                        //Populate Basic <Order> Instance
                         Order order = new Order()
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
                             CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                             Archived = reader.GetBoolean(reader.GetOrdinal("OrderArchived")),
                         };
+
+                        //Add PaymentTypeId To <Order> Instance If Not Null
                         if (!reader.IsDBNull(reader.GetOrdinal("PaymentTypeId")))
                         {
                             order.PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId"));
                         }
 
+                        //Populate <Order>.Customer, If Customers Parameter Given
                         if (_include == "customers")
                         {
                             Customer currentCustomer = new Customer
@@ -141,7 +152,7 @@ namespace BangazonAPI.Controllers
                                 Orders.Add(order);
                             }
 
-
+                        //Generate <Order>.ProductList Instance If Product Parameter Given
                         else if (_include == "products")
 
                         {
@@ -153,6 +164,7 @@ namespace BangazonAPI.Controllers
                                 Price = reader.GetDecimal(reader.GetOrdinal("ProductPrice"))
                             };
 
+                        //Populate <Order>.ProductList
                             List<Product> OrderProducts = new List<Product>();
 
                             if (Orders.Any(o => o.Id == order.Id))
@@ -167,12 +179,14 @@ namespace BangazonAPI.Controllers
                             }
                         }
                         
+                        //Add Individual Orders to List<Order>
                         else
                         {
                             Orders.Add(order);
                         }
                     }
 
+                    //Close Reader And Return Orders
                     reader.Close();
                     return Ok(Orders);
                 }
@@ -191,6 +205,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+                    //Base SQL Query
                     string command = "";
 
                     string orderColumns = @"
@@ -201,6 +216,8 @@ namespace BangazonAPI.Controllers
 
                     string orderTable = @"FROM [Order] o";
 
+
+                    //To Include Customer SQL Parameters
                     if (_include == "customers")
                     {
                         string customerColumns = @",
@@ -220,6 +237,8 @@ namespace BangazonAPI.Controllers
                                      {customerTables} WHERE o.Id = '{orderId}'";
                     }
 
+
+                    //To Include Products SQL Parameters
                     else if (_include == "products")
                     {
                         string productColumns = @",
@@ -238,6 +257,8 @@ namespace BangazonAPI.Controllers
                         {productTables} WHERE o.Id = '{orderId}'";
                     }
 
+
+                    //To Filter Unpaid Orders
                     else if (_include == "completed")
                     {
                         string completedFilter = "WHERE o.PaymentTypeId IS NOT NULL";
@@ -247,6 +268,8 @@ namespace BangazonAPI.Controllers
                         {completedFilter} WHERE o.id = '{orderId}'";
                     }
 
+
+                    //Base Single Order SQL Syntax
                     else
                     {
                         command = $"{orderColumns} {orderTable} WHERE o.Id = '{orderId}'";
@@ -255,10 +278,12 @@ namespace BangazonAPI.Controllers
                     cmd.CommandText = command;
                     SqlDataReader reader = cmd.ExecuteReader();
 
+                    //Empty Order Instance To Be Populated
                     Order order = null;
 
                     if (reader.Read())
                     {
+                        //Population Of Order Instance
                         order = new Order
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
@@ -266,11 +291,13 @@ namespace BangazonAPI.Controllers
                             Archived = reader.GetBoolean(reader.GetOrdinal("OrderArchived"))
                         };
 
+                        //Adding PaymentType To Order Instance If Not Null
                         if (!reader.IsDBNull(reader.GetOrdinal("PaymentTypeId")))
                         {
                             order.PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId"));
                         }
 
+                        //Populating <Order>.Customer If Parameter Given
                         if (_include == "customers")
                         {
                             Customer currentCustomer = new Customer
@@ -287,7 +314,7 @@ namespace BangazonAPI.Controllers
 
                         }
 
-
+                        //Populating <Order>.ProductList If Parameter Given
                         else if (_include == "products")
 
                         {
@@ -320,16 +347,22 @@ namespace BangazonAPI.Controllers
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
+
+                //SQL Parameters To Post New Order To DB
                 {
                     cmd.CommandText = @"INSERT INTO [Order] (CustomerId, PaymentTypeId, Archived) OUTPUT INSERTED.Id VALUES (@customerId, @paymentId, 0)";
                     cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
                     cmd.Parameters.Add(new SqlParameter("@paymentId", order.PaymentTypeId));
-                    
 
+                    //Returns Id Of Posted Order
                     int newId = (int)cmd.ExecuteScalar();
+                    
+                    //Set OrderId To ReturnedId
                     order.Id = newId;
+                    
+                    //Display Posted Order
                     return Created($"/api/order/{newId}", order);
-                    /*return CreatedAtRoute("GetCustomer", new { Id = newId }, customer)*/
+                    
                     ;
                 }
             }
@@ -345,13 +378,16 @@ namespace BangazonAPI.Controllers
                 {
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
+
+                    //SQL Argument To Post Edited Order
                     {
                         cmd.CommandText = @"UPDATE [Order] SET CustomerId = @customerId, PaymentTypeId = @paymentTypeId WHERE Id = @orderId";
                         cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
                         cmd.Parameters.Add(new SqlParameter("@paymentTypeId", order.PaymentTypeId));
-                        
+
                         cmd.Parameters.Add(new SqlParameter("@orderId", Id));
 
+                    //Check To Look For 204 Return Code 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
@@ -361,6 +397,8 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
+
+            //Post Failure Method Below
             catch (Exception)
             {
                 if (!OrderExists(Id))
@@ -376,7 +414,7 @@ namespace BangazonAPI.Controllers
 
         // DELETE: api/Order/5
         [HttpDelete("{Id}")]
-        public async Task<IActionResult> Delete([FromRoute] int orderId)
+        public async Task<IActionResult> Delete([FromRoute] int orderId, bool delete)
         {
             try
             {
@@ -385,11 +423,25 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM [Order] WHERE Id = @orderId";
+                        //Hard Delete SQL For Order Test
+                        if (delete == true)
+                        {
+                            cmd.CommandText = @"DELETE FROM [Order] WHERE Id = @orderId";
+                        }
+                        //Set Archive = True SQL For Order Test
+                        else
+                        {
+                            cmd.CommandText = @"UPDATE [Order] SET Archived = 1 WHERE Id = @orderId";
+                        }
+                       
                         cmd.Parameters.Add(new SqlParameter("@orderId", orderId));
 
+                        //Send SQL Argument To Database Without Data Return
                         int rowsAffected = cmd.ExecuteNonQuery();
+
+                        //Check For 204 Return Code
                         if (rowsAffected > 0)
+
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
@@ -397,6 +449,8 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
+
+            //Delete Failure Method Below
             catch (Exception)
             {
                 if (!OrderExists(orderId))
@@ -409,6 +463,8 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
+
+        //Method To Check For Order Existance Below
         private bool OrderExists(int Id)
         {
             using (SqlConnection conn = Connection)
@@ -416,6 +472,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+                    //Order Existance SQL Syntax
                     cmd.CommandText = @"
                         SELECT Id, CustomerId, PaymentTypeId, Archived
                         FROM [Order]

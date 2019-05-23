@@ -1,4 +1,7 @@
-﻿using System;
+﻿//Test Suite For Customer Controller
+//Charles Belcher - May 23 2019
+
+using System;
 using Newtonsoft.Json;
 using BangazonAPI.Models;
 using System.Collections.Generic;

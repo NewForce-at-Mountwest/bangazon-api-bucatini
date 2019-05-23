@@ -1,4 +1,7 @@
-﻿using System;
+﻿//Test Suite For Order Controller
+//Charles Belcher - May 23 2019
+
+using System;
 using Newtonsoft.Json;
 using BangazonAPI.Models;
 using System.Collections.Generic;
@@ -48,7 +51,7 @@ namespace TestBangazonAPI
 
         public async Task deleteOrder(Order testOrder, HttpClient client)
         {
-            HttpResponseMessage deleteResponse = await client.DeleteAsync($"api/order/{testOrder.Id}");
+            HttpResponseMessage deleteResponse = await client.DeleteAsync($"api/order/{testOrder.Id}?delete=True");
             deleteResponse.EnsureSuccessStatusCode();
             Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
