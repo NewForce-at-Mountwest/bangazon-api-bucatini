@@ -55,7 +55,7 @@ namespace BangazonAPI.Controllers
 
                     
                     
-                    string ProductTable = "FROM Product";
+                    string ProductTable = "FROM Product WHERE Archived = 0";
 
                     command = $"{ProductColumns} {ProductTable}";
                     
