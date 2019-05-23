@@ -49,8 +49,8 @@ namespace BangazonAPI.Controllers
                         c.LastName AS 'CustomerLastName',
                         c.AccountCreated AS 'DateJoined', 
                         c.LastActive AS 'LastActive',
-                        c.Archived AS 'CustomerArchived'"; 
-                    
+                        c.Archived AS 'CustomerArchived'";
+
                     string customerTable = "FROM Customer c";
 
 
