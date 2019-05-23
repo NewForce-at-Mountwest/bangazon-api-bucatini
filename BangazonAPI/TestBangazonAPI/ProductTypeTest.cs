@@ -35,11 +35,11 @@ namespace TestBangazonAPI
             response.EnsureSuccessStatusCode();
 
             string responseBody = await response.Content.ReadAsStringAsync();
-            ProductType Couch = JsonConvert.DeserializeObject<ProductType>(responseBody);
+            ProductType newFurniture = JsonConvert.DeserializeObject<ProductType>(responseBody);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-            return Couch;
+            return newFurniture;
 
         }
 
@@ -103,9 +103,9 @@ namespace TestBangazonAPI
 
                 // Did we get back what we expected to get back? 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.Equal("Couches", newFurniture.Name);
+                Assert.Equal("Furniture", newFurniture.Name);
 
-                // Clean up after ourselves- delete newRedMug!
+                // Clean up after ourselves- delete newFurniture!
                 deleteFurniture(newFurniture, client);
             }
         }
@@ -131,16 +131,16 @@ namespace TestBangazonAPI
             using (var client = new APIClientProvider().Client)
             {
 
-                // Create a new David
-                ProductType Couches = await createFurniture(client);
+                // Create a new Furniture
+                ProductType brandNewFurniture = await createFurniture(client);
 
                 // Make sure his info checks out
-                Assert.Equal("Couches", Couches.Name);
+                Assert.Equal("Furniture", brandNewFurniture.Name);
                 
 
 
                 // Clean up after ourselves - delete redMug!
-                deleteFurniture(Couches, client);
+                deleteFurniture(brandNewFurniture, client);
             }
         }
 
@@ -169,7 +169,7 @@ namespace TestBangazonAPI
                 // Create a new ProductType
                 ProductType brandNewFurniture = await createFurniture(client);
 
-                // Change their first name
+                // Change their name
                 brandNewFurniture.Name = newName;
 
                 // Convert them to JSON
@@ -202,7 +202,7 @@ namespace TestBangazonAPI
 
                 Assert.Equal(HttpStatusCode.OK, getNewFurniture.StatusCode);
 
-                // Make sure his name was in fact updated
+                // Make sure its name was in fact updated
                 Assert.Equal(newName, modifiedFurniture.Name);
 
                 // Clean up after ourselves- delete it

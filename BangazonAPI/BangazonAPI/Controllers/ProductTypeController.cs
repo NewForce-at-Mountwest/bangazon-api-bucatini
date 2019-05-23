@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace BangazonAPI.Controllers { 
 
-    //Remember to add archived if needed
+   
 
     [Route("api/[controller]")]
     [ApiController]
@@ -47,8 +47,7 @@ namespace BangazonAPI.Controllers {
 
                     string ProductTypeColumns = @"
                         SELECT Id AS 'ProductType Id', 
-                        Name AS 'Name',
-                        Archived As 'Archived'"; 
+                        Name AS 'Name'"; 
                         
 
 
@@ -70,8 +69,7 @@ namespace BangazonAPI.Controllers {
                         ProductType currentProductType = new ProductType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("ProductType Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))};
+                            Name = reader.GetString(reader.GetOrdinal("Name"))};
 
 
 
@@ -97,8 +95,7 @@ namespace BangazonAPI.Controllers {
                 {
                     cmd.CommandText = @"
                         SELECT Id AS 'ProductType Id', 
-                        Name,
-                        Archived,
+                        Name
                         FROM ProductType
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -111,9 +108,7 @@ namespace BangazonAPI.Controllers {
                         ProductType = new ProductType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("ProductType Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))
-                        };
+                            Name = reader.GetString(reader.GetOrdinal("Name"))};
                     }
                     reader.Close();
 
@@ -130,9 +125,9 @@ namespace BangazonAPI.Controllers {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO ProductType (Name, Archived)
+                    cmd.CommandText = @"INSERT INTO ProductType (Name)
                                         OUTPUT INSERTED.Id
-                                        VALUES (@Name, 0)";
+                                        VALUES (@Name)";
                     cmd.Parameters.Add(new SqlParameter("@Name", ProductType.Name));
 
 
@@ -154,8 +149,7 @@ namespace BangazonAPI.Controllers {
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE ProductType
-                                            SET Name=@Name,
-                                            Archived = 0    
+                                            SET Name=@Name  
                                             WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@Name", ProductType.Name));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -192,14 +186,10 @@ namespace BangazonAPI.Controllers {
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        if (delete == true)
-                        {
-                            cmd.CommandText = @"DELETE FROM ProductType WHERE Id = @id";
-                        }
-                        else
-                        {
-                            cmd.CommandText = @"UPDATE ProductType SET Archived=1 WHERE Id =@id";
-                        }
+                        
+                        cmd.CommandText = @"DELETE FROM ProductType WHERE Id = @id";
+              
+                        
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = cmd.ExecuteNonQuery();
@@ -233,7 +223,7 @@ namespace BangazonAPI.Controllers {
                 {
                     cmd.CommandText = @"
                         SELECT
-                            Id, Name, Archived
+                            Id, Name
                         FROM ProductType
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
