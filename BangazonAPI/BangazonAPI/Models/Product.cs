@@ -24,7 +24,10 @@ namespace BangazonAPI.Models
         public bool Archived { get; set; }
 
     }
+
 }
+
+
 
 
 
