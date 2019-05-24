@@ -105,7 +105,7 @@ namespace BangazonAPI.Controllers
                     //SQL Query To Search For Customer By FirstName, LastName, AccountCreated, LastActive, or Archived
                     if (q != null)
                     {
-                        command += $" WHERE c.FirstName LIKE '%{q}%' OR c.LastName LIKE '%{q}%' OR c.AccountCreated LIKE '%{q}%' OR c.LastActive LIKE '%{q}%' OR c.Archived LIKE '%{q}%'";
+                        command += $" AND c.FirstName LIKE '%{q}%' OR c.LastName LIKE '%{q}%' OR c.AccountCreated LIKE '%{q}%' OR c.LastActive LIKE '%{q}%' OR c.Archived LIKE '%{q}%'";
                     }
 
 
