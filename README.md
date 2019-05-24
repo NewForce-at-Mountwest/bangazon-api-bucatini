@@ -1,47 +1,63 @@
-# Building the Bangazon Platform API
+# Bangazon API!!!!
 
-Welcome, new Bangazonians!
-
-Your job is to build out a .NET Web API that makes each resource in the Bangazon ERD available to application developers throughout the entire company.
-
-1. Products
-1. Product types
-1. Customers
-1. Orders
-1. Payment types
-1. Employees
-1. Computers
-1. Training programs
-1. Departments
-
-> **Pro tip:** You do not need to make a Controller for the join tables, because those aren't resources.
-
-Your product owner will provide you with a prioritized backlog of features for you to work on over the development sprint. The first version of the API will be completely open since we have not determined which authentication method we want to use yet.
+# URL's Supported
 
 
+# -Customers
+URL - https://localhost:5001/api/Customer  
 
-## Plan
+Supported Verbs
+`GET`
+`POST`
+`PUT`
 
-First, you need to plan. 
+If the query string parameter of `?_include=products` is entered, then any products that the customer is selling will be included in the response.
 
-- Your team needs to use the official SQL script (see below) and build a  Bangazon ERD using dbdiagram.io. Once your team agrees that the ERD is complete, you must get it approved by your manager before you begin writing code for the API.
-- Read all of the tickets. They're in order of priority. This is a week long sprint, and you're in charge of deciding how many tickets you want to take on. When you've decided, Jordan will come around for a commitment ceremony.
+If the query string parameter of `?_include=payments` is provided, then any payment types that the customer has used to pay for an order will be included in the response.
 
+If the query string parameter of `q` is provided when querying the list of customers, then any customer that has a property value that matches the pattern will be returned.
 
-## Modeling
+If `/customers?q=mic` is requested, then any customer whose first name is Michelle, or Michael, or Domicio will be returned. Any customer whose last name is Michaelangelo, or Omici, Dibromic will be returned.
 
-Next, you need to author the Models needed for your API. Make sure that each model has the approprate foreign key relationship defined on it, either with a custom type or an `List<T>` to store many related things. 
+# -Product
+URL - https://localhost:5001/api/Product
 
-## Database Management
+Supported Verbs
+`GET`
+`POST`
+`PUT`
+`DELETE`
 
-You will be using the [Official Bangazon SQL](./bangazon.sql) file to create your database. Create the database using SSMS or the SQL Server Object Explorer in Visual Studio, create a new SQL script for that database, copy the contents of the SQL file into your script, and then execute it. Every team member will need to build the database on their own computer. To avoid merge conflicts in your `appsettings.json` file, *make sure you all name your database the same thing*.
+# -Payment Type
+URL - https://localhost:5001/api/PaymentType
 
-## Controllers
+Supported Verbs
+`GET`
+`POST`
+`PUT`
+`DELETE`
 
-Now it's time to build the controllers that handle GET, POST, PUT, and DELETE operations on each resource. Make sure you read and clarify the requirements in the issue tickets to you can use  SQL to return the correct data structure to client requests.
+# -Product Type
+URL - https://localhost:5001/api/ProductType
 
-## Test Classes
+Supported Verbs
+`GET`
+`POST`
+`PUT`
+`DELETE`
 
-Each feature ticket your team will work on for this sprint has testing requirements. This boilerplate solution has a testing project includes with some starter code. You must make sure that all tests pass before you submit a PR.
+# - Order
+URL - https://localhost:5001/api/Order
 
+Supported Verbs
+`GET`
+`POST`
+`PUT`
+`DELETE`
+
+Can filter out completed orders with the `?completed=false` query string parameter. If the parameter value is true, then only completed order will be returned.
+
+If the query string parameter of `?_include=products` is in the URL, then the list of products in the order will be returned.
+
+If the query string parameter of `?_include=customers` is in the URL, then the customer representation will be included in the response.
 
