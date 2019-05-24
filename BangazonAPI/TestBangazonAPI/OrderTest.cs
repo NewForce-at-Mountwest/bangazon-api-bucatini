@@ -1,4 +1,7 @@
-﻿using System;
+﻿//Test Suite For Order Controller
+//Charles Belcher - May 23 2019
+
+using System;
 using Newtonsoft.Json;
 using BangazonAPI.Models;
 using System.Collections.Generic;
@@ -48,7 +51,7 @@ namespace TestBangazonAPI
 
         public async Task deleteOrder(Order testOrder, HttpClient client)
         {
-            HttpResponseMessage deleteResponse = await client.DeleteAsync($"api/order/{testOrder.Id}");
+            HttpResponseMessage deleteResponse = await client.DeleteAsync($"api/order/{testOrder.Id}?delete=True");
             deleteResponse.EnsureSuccessStatusCode();
             Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
@@ -106,8 +109,8 @@ namespace TestBangazonAPI
                 // Did we get back what we expected to get back? 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Equal(false, order.Archived);
-                //Assert.Equal(1, order.CustomerId);
-                //Assert.Equal(1, order.PaymentType);
+                Assert.Equal(1, order.CustomerId);
+                Assert.Equal(1, order.PaymentTypeId);
 
                 // Clean up after ourselves- delete customer!
                 deleteOrder(order, client);
@@ -165,7 +168,7 @@ namespace TestBangazonAPI
         {
 
             // We're going to change an order's archived status! This is the new status.
-            bool newStatus = true;
+            int newCustomer = 3;
 
             using (HttpClient client = new APIClientProvider().Client)
             {
@@ -174,7 +177,7 @@ namespace TestBangazonAPI
                 Order order  = await createOrder(client);
 
                 // Change their first name
-                order.Archived = newStatus;
+                order.CustomerId = newCustomer;
 
                 // Convert them to JSON
                 string modifiedOrderAsJSON = JsonConvert.SerializeObject(order);
@@ -207,7 +210,7 @@ namespace TestBangazonAPI
                 Assert.Equal(HttpStatusCode.OK, getTestOrder.StatusCode);
 
                 // Make sure the archived status was in fact updated
-                Assert.Equal(newStatus, modifiedOrder.Archived);
+                Assert.Equal(newCustomer, modifiedOrder.CustomerId);
 
                 // Clean up after ourselves- delete him
                 deleteOrder(modifiedOrder, client);

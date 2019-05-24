@@ -40,7 +40,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-
+                    //Base SQL Query
                     string command = "";
 
                     string customerColumns = @"
@@ -53,11 +53,13 @@ namespace BangazonAPI.Controllers
 
                     string customerTable = "FROM Customer c";
 
-
+                    //Add Products SQL Parameters
                     if (_include == "products")
                     {
                         string productColumns = @",
                         p.Id AS 'ProductId',
+                        p.ProductTypeId AS 'ProductTypeId',
+                        p.CustomerId AS 'ProductCustomer',
                         p.Title AS 'ProductName', 
                         p.Description AS 'ProductDescription', 
                         p.Price AS 'ProductPrice',
@@ -72,13 +74,15 @@ namespace BangazonAPI.Controllers
                         command = $@"{customerColumns}
                                     {productColumns} 
                                     {customerTable} 
-                                    {productTables}";
+                                    {productTables} WHERE c.Archived = 0";
                     }
 
+                    //Add Payments SQL Parameters
                     else if (_include == "payments")
                     {
                         string paymentColumns = @",
                         m.Id AS 'PaymentId',
+                        m.CustomerId AS 'PaymentCustomer',
                         m.AcctNumber AS 'AccountNumber',
                         m.Name AS 'AccountName',
                         m.Archived AS 'PaymentArchived'";
@@ -89,14 +93,16 @@ namespace BangazonAPI.Controllers
                         command = $@"{customerColumns}
                                     {paymentColumns}
                                     {customerTable}
-                                    {paymentTables}";
+                                    {paymentTables} WHERE c.Archived = 0";
                     }
 
+                    //Base Orders SQL Query String
                     else
                     {
-                        command = $"{customerColumns} {customerTable}";
+                        command = $"{customerColumns} {customerTable} WHERE c.Archived = 0";
                     }
 
+                    //SQL Query To Search For Customer By FirstName, LastName, AccountCreated, LastActive, or Archived
                     if (q != null)
                     {
                         command += $" WHERE c.FirstName LIKE '%{q}%' OR c.LastName LIKE '%{q}%' OR c.AccountCreated LIKE '%{q}%' OR c.LastActive LIKE '%{q}%' OR c.Archived LIKE '%{q}%'";
@@ -105,11 +111,13 @@ namespace BangazonAPI.Controllers
 
                     cmd.CommandText = command;
                     SqlDataReader reader = cmd.ExecuteReader();
+
+                    //Empty List Of Type <Order> To Be Populated
                     List<Customer> Customers = new List<Customer>();
 
                     while (reader.Read())
                     {
-
+                        //Populate Basic <Order> Instance
                         Customer currentCustomer = new Customer
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("CustomerId")),
@@ -120,12 +128,15 @@ namespace BangazonAPI.Controllers
                             Archived = reader.GetBoolean(reader.GetOrdinal("CustomerArchived"))
                         };
 
+                        //Populate <Customer>.Products, If Products Parameter Given
                         if (_include == "products")
 
                         {
                             Product currentProduct = new Product
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
                                 Title = reader.GetString(reader.GetOrdinal("ProductName")),
                                 Description = reader.GetString(reader.GetOrdinal("ProductDescription")),
                                 Quantity = reader.GetInt32(reader.GetOrdinal("QuantityAvailable")),
@@ -139,6 +150,8 @@ namespace BangazonAPI.Controllers
                                 Customer thisCustomer = Customers.Where(c => c.Id == currentCustomer.Id).FirstOrDefault();
                                 thisCustomer.CustomerProducts.Add(currentProduct);
                             }
+
+                            //Add New Customer & New Product
                             else
                             {
                                 currentCustomer.CustomerProducts.Add(currentProduct);
@@ -146,12 +159,15 @@ namespace BangazonAPI.Controllers
                             }
                         }
 
+                        //Populate <Customer>.CustomerPaymentTypes, If Payments Parameter Given
                         else if (_include == "payments")
 
+                        //Populate <PaymentType> Instance
                         {
                             PaymentType currentPaymentType = new PaymentType
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("PaymentId")),
+                                CustomerId = reader.GetInt32(reader.GetOrdinal("PaymentCustomer")),
                                 Name = reader.GetString(reader.GetOrdinal("AccountName")),
                                 AcctNumber = reader.GetInt64(reader.GetOrdinal("AccountNumber")),
                                 Archived = reader.GetBoolean(reader.GetOrdinal("PaymentArchived"))
@@ -163,6 +179,8 @@ namespace BangazonAPI.Controllers
                                 Customer thisCustomer = Customers.Where(c => c.Id == currentCustomer.Id).FirstOrDefault();
                                 thisCustomer.CustomerPaymentTypes.Add(currentPaymentType);
                             }
+
+                            //Add New Customer & PaymentType
                             else
                             {
                                 currentCustomer.CustomerPaymentTypes.Add(currentPaymentType);
@@ -170,6 +188,7 @@ namespace BangazonAPI.Controllers
                             }
                         }
 
+                        //Add Customer to CustomerList
                         else
                         {
                             Customers.Add(currentCustomer);
@@ -186,62 +205,72 @@ namespace BangazonAPI.Controllers
         [HttpGet("{CustomerId}", Name = "GetCustomer")]
         public async Task<IActionResult> Get(int customerId, string _include)
         {
+            
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+                    //Base SQL Query Definition
                     string command = "";
 
                     string customerColumns = @"
-                        SELECT c.Id AS 'CustomerId', 
-                        c.FirstName AS 'CustomerFirstName', 
-                        c.LastName AS 'CustomerLastName',
-                        c.AccountCreated AS 'DateJoined', 
-                        c.LastActive AS 'LastActive',
-                        c.Archived AS 'CustomerArchived'";
+                            SELECT c.Id AS 'CustomerId', 
+                            c.FirstName AS 'CustomerFirstName', 
+                            c.LastName AS 'CustomerLastName',
+                            c.AccountCreated AS 'DateJoined', 
+                            c.LastActive AS 'LastActive',
+                            c.Archived AS 'CustomerArchived'";
 
                     string customerTable = "FROM Customer c";
 
-
+                    //To Include Product SQL Definition
                     if (_include == "products")
                     {
                         string productColumns = @",
-                        p.Id AS 'ProductId',
-                        p.Title AS 'ProductName', 
-                        p.Description AS 'ProductDescription', 
-                        p.Price AS 'ProductPrice',
-                        p.Quantity AS 'QuantityAvailable',
-                        p.Archived AS 'ProductArchived',
-                        pt.Name AS 'ProductType'";
+                            p.Id AS 'ProductId',
+                            p.CustomerId AS 'ProductCustomer',
+                            p.Title AS 'ProductName', 
+                            p.Description AS 'ProductDescription', 
+                            p.Price AS 'ProductPrice',
+                            p.Quantity AS 'QuantityAvailable',
+                            p.Archived AS 'ProductArchived',
+                            pt.Id AS 'ProductTypeId',
+                            pt.Name AS 'ProductType'";
 
                         string productTables = @"
-                        JOIN Product p ON p.CustomerId = c.Id 
-                        JOIN ProductType pt ON pt.Id = p.ProductTypeId";
+                            JOIN Product p ON p.CustomerId = c.Id 
+                            JOIN ProductType pt ON pt.Id = p.ProductTypeId";
 
+
+                        //Customer With Embedded Products SQL Query
                         command = $@"{customerColumns}
-                                    {productColumns} 
-                                    {customerTable} 
-                                    {productTables} WHERE c.Id = '{customerId}'";
+                                        {productColumns} 
+                                        {customerTable} 
+                                        {productTables} WHERE c.Id = '{customerId}'";
                     }
 
+                    //To Include Payments SQL Definition
                     else if (_include == "payments")
                     {
                         string paymentColumns = @",
-                        m.Id AS 'PaymentId',
-                        m.AcctNumber AS 'AccountNumber',
-                        m.Name AS 'AccountName',
-                        m.Archived AS 'PaymentArchived'";
+                             m.Id AS 'PaymentId',
+                             m.CustomerId AS 'PaymentCustomer',
+                             m.AcctNumber AS 'AccountNumber',
+                             m.Name AS 'AccountName',
+                             m.Archived AS 'PaymentArchived'";
 
                         string paymentTables = @"
-                        JOIN PaymentType m ON m.CustomerId = c.Id";
+                             JOIN PaymentType m ON m.CustomerId = c.Id";
 
+                        //Customer With Embedded PaymentTypes SQL Query 
                         command = $@"{customerColumns}
-                                    {paymentColumns}
-                                    {customerTable}
-                                    {paymentTables} WHERE c.Id = '{customerId}'";
+                                        {paymentColumns}
+                                        {customerTable}
+                                        {paymentTables} WHERE c.Id = '{customerId}'";
                     }
 
+                    //Base Single Customer SQL Query
                     else
                     {
                         command = $"{customerColumns} {customerTable} WHERE c.Id = '{customerId}'";
@@ -249,12 +278,14 @@ namespace BangazonAPI.Controllers
 
                     cmd.CommandText = command;
                     SqlDataReader reader = cmd.ExecuteReader();
-                    List<Customer> Customers = new List<Customer>();
 
-                    while (reader.Read())
+                    //Empty Customer Instance To Be Populated
+                    Customer currentCustomer = null;
+
+                    if (reader.Read())
                     {
-
-                        Customer currentCustomer = new Customer
+                        //Populate Customer Instance
+                        currentCustomer = new Customer
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                             FirstName = reader.GetString(reader.GetOrdinal("CustomerFirstName")),
@@ -264,12 +295,15 @@ namespace BangazonAPI.Controllers
                             Archived = reader.GetBoolean(reader.GetOrdinal("CustomerArchived"))
                         };
 
+                        //Create Product Instance
                         if (_include == "products")
 
                         {
                             Product currentProduct = new Product
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
                                 Title = reader.GetString(reader.GetOrdinal("ProductName")),
                                 Description = reader.GetString(reader.GetOrdinal("ProductDescription")),
                                 Quantity = reader.GetInt32(reader.GetOrdinal("QuantityAvailable")),
@@ -277,79 +311,37 @@ namespace BangazonAPI.Controllers
                                 Archived = reader.GetBoolean(reader.GetOrdinal("ProductArchived"))
                             };
 
-                            // If the customer is already on the list, don't add them again!
-                            if (Customers.Any(c => c.Id == currentCustomer.Id))
-                            {
-                                Customer thisCustomer = Customers.Where(c => c.Id == currentCustomer.Id).FirstOrDefault();
-                                thisCustomer.CustomerProducts.Add(currentProduct);
-                            }
-                            else
-                            {
-                                currentCustomer.CustomerProducts.Add(currentProduct);
-                                Customers.Add(currentCustomer);
-                            }
+                            //Add Product To <Customer>.ProductList
+                             currentCustomer.CustomerProducts.Add(currentProduct);
+
                         }
 
+                        //Create PaymentType Instance
                         else if (_include == "payments")
 
                         {
                             PaymentType currentPaymentType = new PaymentType
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("PaymentId")),
+                                CustomerId = reader.GetInt32(reader.GetOrdinal("PaymentCustomer")),
                                 Name = reader.GetString(reader.GetOrdinal("AccountName")),
                                 AcctNumber = reader.GetInt64(reader.GetOrdinal("AccountNumber")),
                                 Archived = reader.GetBoolean(reader.GetOrdinal("PaymentArchived"))
                             };
 
-                            // If the customer is already on the list, don't add them again!
-                            if (Customers.Any(c => c.Id == currentCustomer.Id))
-                            {
-                                Customer thisCustomer = Customers.Where(c => c.Id == currentCustomer.Id).FirstOrDefault();
-                                thisCustomer.CustomerPaymentTypes.Add(currentPaymentType);
-                            }
-                            else
-                            {
-                                currentCustomer.CustomerPaymentTypes.Add(currentPaymentType);
-                                Customers.Add(currentCustomer);
-                            }
+                            //Populate <Customer>.CustomerPaymentTypes
+                            currentCustomer.CustomerPaymentTypes.Add(currentPaymentType);
+                            
                         }
 
-                        else
-                        {
-                            Customers.Add(currentCustomer);
-                        }
+                        reader.Close();  
                     }
 
+                    return Ok(currentCustomer);
 
-
-
-
-                    //cmd.CommandText = @"SELECT c.Id AS 'Customer Id', c.FirstName, c.LastName, c.AccountCreated, c.LastActive, c.Archived FROM Customer c WHERE c.Id = @customerId";
-
-                    //cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
-                    //SqlDataReader reader = cmd.ExecuteReader();
-
-                    //Customer customer = null;
-
-                    //if (reader.Read())
-                    //{
-                    //    customer = new Customer
-                    //    {
-                    //        Id = reader.GetInt32(reader.GetOrdinal("Customer Id")),
-                    //        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                    //        LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                    //        AccountCreated = reader.GetDateTime(reader.GetOrdinal("AccountCreated")),
-                    //        LastActive = reader.GetDateTime(reader.GetOrdinal("LastActive")),
-                    //        Archived = reader.GetBoolean(reader.GetOrdinal("Archived"))
-                    //    };
-                    //}            
-
-                    reader.Close();
-
-                    return Ok(Customers);
                 }
             }
-        }
+        } 
 
         // POST: api/Customer
         [HttpPost]
@@ -360,17 +352,20 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+                    //SQL Parameters To Post New Customer To DB
                     cmd.CommandText = @"INSERT INTO Customer (FirstName, LastName, AccountCreated, LastActive, Archived) OUTPUT INSERTED.Id VALUES (@firstName, @lastName, GetDate(), GetDate(), 0)";
                     cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
                     cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
-                    //cmd.Parameters.Add(new SqlParameter("@accountCreated", DateTime.Today));
-                    //cmd.Parameters.Add(new SqlParameter("@lastActive", DateTime.Today));
-                    //cmd.Parameters.Add(new SqlParameter("@archived", 0));
 
+                    //Return Id Of Posted Customer
                     int newId = (int)cmd.ExecuteScalar();
+
+                    //Set CustomerId To ReturnedId
                     customer.Id = newId;
+
+                    //Display Posted Customer
                     return Created($"/api/customer/{newId}", customer);
-                    /*return CreatedAtRoute("GetCustomer", new { Id = newId }, customer)*/
+
                     ;
                 }
             }
@@ -387,13 +382,13 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
+                        //SQL Argument To Post Edited Customer
                         cmd.CommandText = @"UPDATE Customer SET FirstName = @firstName, LastName = @lastName WHERE Id = @customerId";
                         cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
                         cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
-                        //cmd.Parameters.Add(new SqlParameter("@slackHandle", instructor.SlackHandle));
-                        //cmd.Parameters.Add(new SqlParameter("@cohortId", instructor.CohortId));
                         cmd.Parameters.Add(new SqlParameter("@customerId", Id));
 
+                        //Check To Look For 204 Return Code 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
@@ -403,6 +398,8 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
+
+            //Post Failure Method Below
             catch (Exception)
             {
                 if (!CustomerExists(Id))
@@ -418,7 +415,7 @@ namespace BangazonAPI.Controllers
 
         // DELETE: api/Customer/5
         [HttpDelete("{CustomerId}")]
-        public async Task<IActionResult> Delete([FromRoute] int customerId)
+        public async Task<IActionResult> Delete([FromRoute] int customerId, bool delete)
         {
             try
             {
@@ -427,10 +424,24 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM Customer WHERE CustomerId = @customerId";
+                        //Hard Delete SQL For Order Test
+                        if (delete == true)
+                        {
+                            cmd.CommandText = @"DELETE FROM Customer WHERE Id = @customerId";
+                        }
+
+                        //Set Archive = True SQL For Order Test
+                        else
+                        {
+                            cmd.CommandText = @"UPDATE Customer SET Archived=1 WHERE Id=@customerId";
+                        }
+                        
                         cmd.Parameters.Add(new SqlParameter("@customerId", customerId));
 
+                        //Send SQL Argument To Database Without Data Return
                         int rowsAffected = cmd.ExecuteNonQuery();
+
+                        //Check For 204 Return Code
                         if (rowsAffected > 0)
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
@@ -439,6 +450,8 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
+
+            //Delete Failure Method Below
             catch (Exception)
             {
                 if (!CustomerExists(customerId))
@@ -451,6 +464,8 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
+
+        //Method To Check For Customer Existance Below
         private bool CustomerExists(int customerId)
         {
             using (SqlConnection conn = Connection)
